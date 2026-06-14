@@ -1,0 +1,9 @@
+target_premium: 50
+entry_time: "09:20:59"
+exit_time: "15:20:59"
+sl_multiplier: 1.5
+lots: 1
+lot_size: 15
+starting_capital: 100000
+base_nav: 100.0
+use_parquet_cache: true

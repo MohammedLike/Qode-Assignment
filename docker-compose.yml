@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: qode_backtest_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: qode
+      POSTGRES_PASSWORD: qode
+      POSTGRES_DB: qode_backtest
+    ports:
+      - "5432:5432"
+    volumes:
+      - qode_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qode -d qode_backtest"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  qode_pgdata:

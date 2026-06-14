@@ -39,6 +39,35 @@ python short_strangle_backtest.py
 
 Or open `short_strangle_backtest.ipynb` in Jupyter / VS Code and run cells top-to-bottom (execute **Section 1 Setup** first).
 
+## Advanced usage
+
+```bash
+# CLI with YAML config
+python -m qode_backtest run
+python -m qode_backtest run --rebuild-cache
+python -m qode_backtest sweep --premiums 40,50,60 --sl 1.3,1.5,1.7
+
+# Streamlit dashboard
+streamlit run dashboard.py
+```
+
+## Project structure
+
+| Path | Description |
+|---|---|
+| `qode_backtest/` | Modular backtest package (config, data, signals, analytics, sweep) |
+| `config.yaml` | Strategy parameters |
+| `data/` | Auto-generated parquet cache |
+| `tests/` | pytest suite with sample fixtures |
+| `dashboard.py` | Interactive Streamlit UI |
+
+## Performance
+
+| Run | Typical runtime |
+|---|---|
+| First run (CSV parse + cache build) | ~35-40s |
+| Repeat run (parquet cache) | ~5-8s |
+
 ## Sample results
 
 | Metric | Value |
