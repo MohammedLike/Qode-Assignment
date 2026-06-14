@@ -53,6 +53,7 @@ def _copy_dataframe(
 
 
 def _options_for_db(df: pd.DataFrame) -> pd.DataFrame:
+    call_put = df["Call/Put"].astype(str) if "Call/Put" in df.columns else df["option_type"].astype(str)
     out = pd.DataFrame(
         {
             "trade_date": pd.to_datetime(df["Date"]).dt.date,
@@ -62,7 +63,7 @@ def _options_for_db(df: pd.DataFrame) -> pd.DataFrame:
             "high": df["High"].astype(float),
             "low": df["Low"].astype(float),
             "close": df["Close"].astype(float),
-            "call_put": df.get("Call/Put", df.get("option_type", "")).astype(str),
+            "call_put": call_put,
             "strike": df["strike"].astype(int),
             "option_type": df["option_type"].astype(str),
             "bar_minute": df["minute"].astype(str),

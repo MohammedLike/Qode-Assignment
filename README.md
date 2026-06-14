@@ -49,6 +49,13 @@ python -m qode_backtest sweep --premiums 40,50,60 --sl 1.3,1.5,1.7
 
 # Streamlit dashboard
 streamlit run dashboard.py
+
+# PostgreSQL (optional)
+docker compose up -d
+copy .env.example .env
+python -m qode_backtest db init
+python -m qode_backtest db load
+python -m qode_backtest db status
 ```
 
 ## Project structure
@@ -60,6 +67,26 @@ streamlit run dashboard.py
 | `data/` | Auto-generated parquet cache |
 | `tests/` | pytest suite with sample fixtures |
 | `dashboard.py` | Interactive Streamlit UI |
+| `docker-compose.yml` | Local PostgreSQL 16 instance |
+| `sql/schema.sql` | Database tables for options, spot, trades |
+
+## PostgreSQL
+
+Market data and backtest results can be stored in PostgreSQL for querying and dashboards.
+
+**Tables:** `options_bars`, `spot_bars`, `backtest_runs`, `trades`
+
+```bash
+docker compose up -d
+pip install -r requirements.txt
+python -m qode_backtest db init
+python -m qode_backtest db load          # options + spot + trades
+python -m qode_backtest db load --no-trades   # market data only
+python -m qode_backtest db status
+```
+
+Connection string (default): `postgresql://qode:qode@localhost:5432/qode_backtest`  
+Override with `DATABASE_URL` env var or `--dsn` flag.
 
 ## Performance
 
