@@ -3,25 +3,23 @@ from __future__ import annotations
 import os
 import time
 from io import StringIO
-from pathlib import Path
 
 import pandas as pd
 import psycopg
 
 from qode_backtest.config import BASE_DIR, StrategyConfig
-from qode_backtest.data_loader import load_options, load_spot
+from qode_backtest.data_loader import load_options
 
 SCHEMA_FILE = BASE_DIR / "sql" / "schema.sql"
-DEFAULT_DSN = "postgresql://qode:qode@localhost:5432/qode_backtest"
-BATCH_SIZE = 50_000
+DEFAULT_DSN = "postgresql://qode:qode@localhost:5434/qode_backtest"
 
 
 def get_dsn(dsn: str | None = None) -> str:
     return dsn or os.environ.get("DATABASE_URL", DEFAULT_DSN)
 
 
-def connect(dsn: str | None = None) -> psycopg.Connection:
-    return psycopg.connect(get_dsn(dsn))
+def connect(dsn: str | None = None, *, connect_timeout: int = 5) -> psycopg.Connection:
+    return psycopg.connect(get_dsn(dsn), connect_timeout=connect_timeout)
 
 
 def init_schema(dsn: str | None = None) -> None:

@@ -85,7 +85,7 @@ python -m qode_backtest db load --no-trades   # market data only
 python -m qode_backtest db status
 ```
 
-Connection string (default): `postgresql://qode:qode@localhost:5432/qode_backtest`  
+Connection string (default): `postgresql://qode:qode@localhost:5434/qode_backtest`  
 Override with `DATABASE_URL` env var or `--dsn` flag.
 
 ## Performance

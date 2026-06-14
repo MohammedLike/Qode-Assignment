@@ -8,7 +8,7 @@ from qode_backtest.db import connect, init_schema, load_options_to_db, load_spot
 
 def _db_available(dsn: str | None = None) -> bool:
     try:
-        with connect(dsn):
+        with connect(dsn, connect_timeout=2):
             return True
     except Exception:
         return False

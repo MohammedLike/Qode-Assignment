@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: qode
       POSTGRES_DB: qode_backtest
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - qode_pgdata:/var/lib/postgresql/data
     healthcheck:
