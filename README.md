@@ -11,24 +11,27 @@
 
 ## Project structure
 
-| File | Description |
+| Path | Description |
 |---|---|
-| `short_strangle_backtest.py` | Main backtest script (vectorized) |
+| `short_strangle_backtest.py` | Main backtest script (backward-compatible entry) |
 | `short_strangle_backtest.ipynb` | Interactive Jupyter notebook |
-| `backtest_output.xlsx` | Output: Guide, Tradesheet, Statistics sheets |
-| `equity_curve.png` | Equity curve plot (base NAV = 100) |
-| `drawdown.png` | Drawdown plot |
-| `BANKNIFTY_SPOT.csv` | Bank Nifty spot 1-min data |
-| `Options_data_2023.csv` | Options 1-min data *(not in repo — see below)* |
+| `qode_backtest/` | Modular package (config, data, signals, analytics, sweep, db) |
+| `config.yaml` | Strategy parameters |
+| `dashboard.py` | Streamlit UI |
+| `docker-compose.yml` | Local PostgreSQL instance |
+| `sql/schema.sql` | Database schema |
+| `tests/` | pytest suite with small CSV fixtures |
 
 ## Data setup
 
-The options file (`Options_data_2023.csv`, ~720 MB) is **not tracked in Git** because it exceeds GitHub’s file size limit. Download it from the assignment Google Drive link and place it in the project root:
+Raw data files are **not in Git** (too large). Download both from the assignment Google Drive link and place them in the project root:
 
 ```
-Options_data_2023.csv
-BANKNIFTY_SPOT.csv
+Options_data_2023.csv   (~720 MB)
+BANKNIFTY_SPOT.csv      (~8 MB)
 ```
+
+Running the backtest generates `backtest_output.xlsx`, `equity_curve.png`, and `drawdown.png` locally.
 
 ## Quick start
 
@@ -57,18 +60,6 @@ python -m qode_backtest db init
 python -m qode_backtest db load
 python -m qode_backtest db status
 ```
-
-## Project structure
-
-| Path | Description |
-|---|---|
-| `qode_backtest/` | Modular backtest package (config, data, signals, analytics, sweep) |
-| `config.yaml` | Strategy parameters |
-| `data/` | Auto-generated parquet cache |
-| `tests/` | pytest suite with sample fixtures |
-| `dashboard.py` | Interactive Streamlit UI |
-| `docker-compose.yml` | Local PostgreSQL 16 instance |
-| `sql/schema.sql` | Database tables for options, spot, trades |
 
 ## PostgreSQL
 

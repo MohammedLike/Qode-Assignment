@@ -5,10 +5,19 @@ __pycache__/
 venv/
 .env
 
+# Raw market data (download from assignment Drive)
 Options_data_2023.csv
+BANKNIFTY_SPOT.csv
 
+# Generated cache and outputs
 data/
+backtest_output.xlsx
+equity_curve.png
+drawdown.png
+sensitivity_heatmap.png
+Qode_Assignment_Submission_Report.pdf
+unnamed.png
+
+# Tooling
 .pytest_cache/
 .ruff_cache/
-
-unnamed.png
