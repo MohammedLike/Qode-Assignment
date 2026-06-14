@@ -1,8 +1,3 @@
-"""
-Bank Nifty 09:20 Short Strangle Backtest
-Qode Quant Research Analyst Assignment
-"""
-
 from __future__ import annotations
 
 import time
@@ -12,9 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
 OPTIONS_FILE = BASE_DIR / "Options_data_2023.csv"
 SPOT_FILE = BASE_DIR / "BANKNIFTY_SPOT.csv"
@@ -30,7 +22,7 @@ LOT_SIZE = 15
 QUANTITY = LOTS * LOT_SIZE
 STARTING_CAPITAL = 100_000
 BASE_NAV = 100.0
-SL_MULTIPLIER = 1.5  # 50% stop loss above entry (short)
+SL_MULTIPLIER = 1.5  
 
 TIMINGS: dict[str, float] = {}
 
@@ -41,9 +33,6 @@ def _tick(label: str, t0: float) -> float:
     return time.perf_counter()
 
 
-# ---------------------------------------------------------------------------
-# Module 1 — Data Loading
-# ---------------------------------------------------------------------------
 def load_options() -> pd.DataFrame:
     """Load and preprocess options data (09:20–15:20 window only)."""
     t0 = time.perf_counter()
@@ -56,7 +45,6 @@ def load_options() -> pd.DataFrame:
     )
     df["Time"] = df["Time"].astype(str)
 
-    # Keep only bars needed for entry, SL scan, and scheduled exit
     time_mask = (df["Time"] >= ENTRY_TIME) & (df["Time"] <= EXIT_TIME)
     df = df.loc[time_mask].copy()
     df = df.drop_duplicates(subset=["Date", "Ticker", "Time"], keep="last")
@@ -86,9 +74,6 @@ def load_spot() -> pd.DataFrame:
     return spot
 
 
-# ---------------------------------------------------------------------------
-# Module 2 — Strike Selection
-# ---------------------------------------------------------------------------
 def select_strikes(entry_bars: pd.DataFrame) -> pd.DataFrame:
     """Pick CE and PE strikes with 09:20 close closest to Rs. 50."""
     t0 = time.perf_counter()
@@ -129,9 +114,6 @@ def select_strikes(entry_bars: pd.DataFrame) -> pd.DataFrame:
     ]
 
 
-# ---------------------------------------------------------------------------
-# Module 3 — Signal Generation + Stop Loss
-# ---------------------------------------------------------------------------
 def apply_signals(selected: pd.DataFrame, intraday: pd.DataFrame) -> pd.DataFrame:
     """Determine exit time/price via 50% SL or scheduled 15:20 exit."""
     t0 = time.perf_counter()
@@ -195,9 +177,6 @@ def apply_signals(selected: pd.DataFrame, intraday: pd.DataFrame) -> pd.DataFram
     return trades
 
 
-# ---------------------------------------------------------------------------
-# Module 4 & 5 — Position Sizing + Trade Sheet
-# ---------------------------------------------------------------------------
 def build_tradesheet(trades: pd.DataFrame, spot: pd.DataFrame) -> pd.DataFrame:
     """Build full trade log with P&L, capital, and underlying."""
     t0 = time.perf_counter()
@@ -253,9 +232,6 @@ def build_tradesheet(trades: pd.DataFrame, spot: pd.DataFrame) -> pd.DataFrame:
     return sheet
 
 
-# ---------------------------------------------------------------------------
-# Module 6 — Statistical Analysis
-# ---------------------------------------------------------------------------
 def compute_daily_nav(tradesheet: pd.DataFrame) -> pd.Series:
     """Daily NAV series (base 100), trade-wise / day-end."""
     daily_pnl = (
@@ -388,9 +364,6 @@ def compute_statistics(tradesheet: pd.DataFrame) -> dict:
     }
 
 
-# ---------------------------------------------------------------------------
-# Module 7 — Plots
-# ---------------------------------------------------------------------------
 def save_plots(nav: pd.Series, drawdown: pd.Series, max_dd: float) -> None:
     t0 = time.perf_counter()
 
@@ -422,9 +395,6 @@ def save_plots(nav: pd.Series, drawdown: pd.Series, max_dd: float) -> None:
     _tick("7_plots_sec", t0)
 
 
-# ---------------------------------------------------------------------------
-# Module 8 — Excel Export
-# ---------------------------------------------------------------------------
 def build_guide_sheet() -> pd.DataFrame:
     """Documentation / guide worksheet."""
     lines = [
@@ -499,9 +469,6 @@ def export_excel(tradesheet: pd.DataFrame, stats: dict, total_t0: float) -> None
     _tick("8_excel_write_sec", t0)
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 def run_backtest() -> pd.DataFrame:
     total_t0 = time.perf_counter()
 
