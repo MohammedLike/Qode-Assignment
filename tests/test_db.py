@@ -1,29 +1,32 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 import pytest
 
 from qode_backtest.config import StrategyConfig
 from qode_backtest.db import connect, init_schema, load_options_to_db, load_spot_to_db, table_counts
 
 
-def _db_available(dsn: str | None = None) -> bool:
+def _skip_db_tests() -> bool:
+    if os.environ.get("CI") == "true":
+        return True
     try:
-        with connect(dsn, connect_timeout=2):
-            return True
+        with connect(connect_timeout=2):
+            return False
     except Exception:
-        return False
+        return True
 
 
 pytestmark = pytest.mark.skipif(
-    not _db_available(),
-    reason="PostgreSQL not available (start with: docker compose up -d)",
+    _skip_db_tests(),
+    reason="PostgreSQL integration tests skipped (CI or DB unavailable)",
 )
 
 
 @pytest.fixture
 def db_cfg() -> StrategyConfig:
-    from pathlib import Path
-
     fixtures = Path(__file__).parent / "fixtures"
     return StrategyConfig(
         options_file=fixtures / "options_sample.csv",

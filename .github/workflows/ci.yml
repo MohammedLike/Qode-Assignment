@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      CI: true
     steps:
       - uses: actions/checkout@v4
 
@@ -22,7 +24,7 @@ jobs:
           pip install pytest ruff
 
       - name: Lint
-        run: ruff check qode_backtest tests short_strangle_backtest.py dashboard.py
+        run: ruff check qode_backtest tests short_strangle_backtest.py dashboard.py generate_submission_report.py
 
       - name: Test
         run: pytest tests/ -v

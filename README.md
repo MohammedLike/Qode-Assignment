@@ -2,6 +2,10 @@
 
 09:20 AM short strangle backtest on Bank Nifty week-1 weekly options (Wednesday expiry), built for the Qode Quant Research Analyst assignment.
 
+**Repository:** [github.com/MohammedLike/Qode-Assignment](https://github.com/MohammedLike/Qode-Assignment)
+
+![CI](https://github.com/MohammedLike/Qode-Assignment/actions/workflows/ci.yml/badge.svg)
+
 ## Strategy
 
 - **Entry:** 09:20 — sell 1 CE + 1 PE (strikes with premium closest to Rs. 50)
@@ -13,14 +17,16 @@
 
 | Path | Description |
 |---|---|
-| `short_strangle_backtest.py` | Main backtest script (backward-compatible entry) |
+| `short_strangle_backtest.py` | Backward-compatible entry point |
 | `short_strangle_backtest.ipynb` | Interactive Jupyter notebook |
 | `qode_backtest/` | Modular package (config, data, signals, analytics, sweep, db) |
 | `config.yaml` | Strategy parameters |
-| `dashboard.py` | Streamlit UI |
-| `docker-compose.yml` | Local PostgreSQL instance |
+| `dashboard.py` | Streamlit UI with Plotly charts |
+| `generate_submission_report.py` | HR submission PDF generator |
+| `docker-compose.yml` | Local PostgreSQL 16 instance |
 | `sql/schema.sql` | Database schema |
 | `tests/` | pytest suite with small CSV fixtures |
+| `.github/workflows/ci.yml` | GitHub Actions (ruff + pytest) |
 
 ## Data setup
 
@@ -31,57 +37,76 @@ Options_data_2023.csv   (~720 MB)
 BANKNIFTY_SPOT.csv      (~8 MB)
 ```
 
-Running the backtest generates `backtest_output.xlsx`, `equity_curve.png`, and `drawdown.png` locally.
+Running the backtest generates these files locally (also gitignored):
+
+```
+backtest_output.xlsx
+equity_curve.png
+drawdown.png
+sensitivity_heatmap.png   (after parameter sweep)
+Qode_Assignment_Submission_Report.pdf
+data/options_0920_1520.parquet   (auto cache)
+```
 
 ## Quick start
 
 ```bash
 pip install -r requirements.txt
 python short_strangle_backtest.py
+# or
+python -m qode_backtest run
 ```
 
-Or open `short_strangle_backtest.ipynb` in Jupyter / VS Code and run cells top-to-bottom (execute **Section 1 Setup** first).
+Or open `short_strangle_backtest.ipynb` in Jupyter / VS Code (run **Section 1 Setup** first).
 
-## Advanced usage
+## CLI commands
 
 ```bash
-# CLI with YAML config
+# Backtest
 python -m qode_backtest run
 python -m qode_backtest run --rebuild-cache
+python -m qode_backtest run --no-export
+
+# Parameter sweep (premium x SL multiplier)
+python -m qode_backtest sweep
 python -m qode_backtest sweep --premiums 40,50,60 --sl 1.3,1.5,1.7
 
 # Streamlit dashboard
 streamlit run dashboard.py
 
-# PostgreSQL (optional)
-docker compose up -d
-copy .env.example .env
-python -m qode_backtest db init
-python -m qode_backtest db load
-python -m qode_backtest db status
+# HR submission PDF
+python generate_submission_report.py
+python generate_submission_report.py --report-only   # if Excel is already built
 ```
 
-## PostgreSQL
+## PostgreSQL (optional)
 
-Market data and backtest results can be stored in PostgreSQL for querying and dashboards.
+Store market data and backtest results for SQL querying (pgAdmin, DBeaver, etc.).
 
 **Tables:** `options_bars`, `spot_bars`, `backtest_runs`, `trades`
 
 ```bash
 docker compose up -d
-pip install -r requirements.txt
 python -m qode_backtest db init
-python -m qode_backtest db load          # options + spot + trades
-python -m qode_backtest db load --no-trades   # market data only
+python -m qode_backtest db load
 python -m qode_backtest db status
 ```
 
-Connection string (default): `postgresql://qode:qode@localhost:5434/qode_backtest`  
-Override with `DATABASE_URL` env var or `--dsn` flag.
+**pgAdmin connection settings:**
+
+| Field | Value |
+|---|---|
+| Host | `localhost` |
+| Port | `5434` |
+| Database | `qode_backtest` |
+| Username | `qode` |
+| Password | `qode` |
+
+Connection URL: `postgresql://qode:qode@localhost:5434/qode_backtest`
 
 ## Performance
 
-| Run | Typical runtime |
+| Run type | Typical runtime |
 |---|---|
 | First run (CSV parse + cache build) | ~35-40s |
 | Repeat run (parquet cache) | ~5-8s |
@@ -94,9 +119,21 @@ Override with `DATABASE_URL` env var or `--dsn` flag.
 | Total trades | 494 (2 per day) |
 | CAGR | ~8.3% |
 | Max drawdown | ~-3.1% |
-| Runtime | ~40 seconds |
+| Sharpe ratio | ~1.25 |
+| Final NAV (base 100) | ~108.26 |
+
+## Testing and CI
+
+```bash
+pytest tests/ -v
+ruff check qode_backtest tests short_strangle_backtest.py dashboard.py
+```
+
+CI runs automatically on push to `main` via GitHub Actions.
 
 ## Outputs
 
 - **Tradesheet:** entry/exit, ticker, strike, P&L, cumulative P&L, available capital
-- **Statistics:** CAGR, max drawdown, win/loss (CE/PE/combined), expiry vs non-expiry, monthly P&L, equity curve table
+- **Statistics:** CAGR, max drawdown, Sharpe/Sortino/Calmar, win/loss (CE/PE/combined), expiry vs non-expiry, monthly P&L
+- **Sensitivity sheet:** parameter sweep results (after `sweep` command)
+- **Submission report:** `Qode_Assignment_Submission_Report.pdf` for HR review
