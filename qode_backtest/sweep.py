@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import pandas as pd
 
-from qode_backtest.analytics import compute_statistics
+from qode_backtest.analytics import compute_statistics, pnl_column
 from qode_backtest.config import StrategyConfig
 from qode_backtest.export import save_sensitivity_heatmap
 from qode_backtest.signals import apply_signals
@@ -32,6 +32,7 @@ def run_sweep(
             trades_raw = apply_signals(selected, options, cfg)
             tradesheet = build_tradesheet(trades_raw, spot, cfg)
             stats = compute_statistics(tradesheet, cfg)
+            col = pnl_column(cfg)
             rows.append(
                 {
                     "target_premium": premium,
@@ -39,7 +40,7 @@ def run_sweep(
                     "cagr_pct": round(stats["cagr"] * 100, 2),
                     "max_dd_pct": round(stats["max_dd"], 2),
                     "final_nav": round(stats["nav"].iloc[-1], 4),
-                    "total_pnl": round(tradesheet["Gross P&L"].sum(), 2),
+                    "total_pnl": round(tradesheet[col].sum(), 2),
                     "total_trades": len(tradesheet),
                 }
             )

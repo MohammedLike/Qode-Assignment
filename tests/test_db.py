@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-import os
 from pathlib import Path
 
 import pytest
@@ -10,8 +7,6 @@ from qode_backtest.db import connect, init_schema, load_options_to_db, load_spot
 
 
 def _skip_db_tests() -> bool:
-    if os.environ.get("CI") == "true":
-        return True
     try:
         with connect(connect_timeout=2):
             return False

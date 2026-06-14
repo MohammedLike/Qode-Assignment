@@ -31,6 +31,10 @@ class StrategyConfig:
     spot_file: Path = field(default_factory=lambda: SPOT_FILE)
     use_parquet_cache: bool = True
     force_rebuild_cache: bool = False
+    realism_enabled: bool = True
+    slippage_pct: float = 0.005
+    brokerage_per_leg: float = 20.0
+    risk_free_rate: float = 0.06
 
     @property
     def quantity(self) -> int:

@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import time
 
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -81,6 +84,9 @@ def build_guide_sheet(cfg: StrategyConfig) -> pd.DataFrame:
         ("Position Size", f"{cfg.lots} lot x {cfg.lot_size} = {cfg.quantity} qty per leg"),
         ("Starting Capital", f"Rs. {cfg.starting_capital:,.0f}"),
         ("Base NAV", str(cfg.base_nav)),
+        ("Realism (slippage + brokerage)", str(cfg.realism_enabled)),
+        ("Slippage on SL exits", f"{cfg.slippage_pct * 100:.2f}% adverse fill"),
+        ("Brokerage per leg", f"Rs. {cfg.brokerage_per_leg:.0f}"),
         ("Parquet Cache", str(cfg.use_parquet_cache)),
         ("", ""),
         ("Runtime Breakdown (seconds)", ""),
@@ -99,7 +105,7 @@ def export_excel(
 ) -> None:
     cfg = cfg or StrategyConfig.from_yaml()
     t0 = time.perf_counter()
-    export_tradesheet = tradesheet.drop(columns=["Exit Reason", "Is Expiry Day", "% P&L"])
+    export_tradesheet = tradesheet.drop(columns=["Exit Reason", "Is Expiry Day", "% P&L"], errors="ignore")
 
     tick("8_excel_export_prep_sec", t0)
     TIMINGS["total_sec"] = time.perf_counter() - total_t0
@@ -120,12 +126,50 @@ def export_excel(
             ("Monthly % P&L (from NAV)", stats["monthly_table"]),
             ("Equity Curve Table", stats["equity_table"]),
         ]:
+            if df is None or (isinstance(df, pd.DataFrame) and df.empty):
+                continue
             pd.DataFrame([{"Metric": title}]).to_excel(
                 writer, sheet_name="Statistics", index=False, header=False, startrow=row
             )
             row += 2
             df.to_excel(writer, sheet_name="Statistics", index=False, startrow=row)
             row += len(df) + 3
+
+        realism = stats.get("realism_comparison")
+        if realism is not None and not realism.empty:
+            pd.DataFrame([{"Metric": "Ideal vs Realistic P&L"}]).to_excel(
+                writer, sheet_name="Statistics", index=False, header=False, startrow=row
+            )
+            row += 2
+            realism.to_excel(writer, sheet_name="Statistics", index=False, startrow=row)
+            row += len(realism) + 3
+
+        benchmark = stats.get("benchmark_summary")
+        if benchmark is not None and not benchmark.empty:
+            pd.DataFrame([{"Metric": "Benchmark vs Strategy"}]).to_excel(
+                writer, sheet_name="Statistics", index=False, header=False, startrow=row
+            )
+            row += 2
+            benchmark.to_excel(writer, sheet_name="Statistics", index=False, startrow=row)
+            row += len(benchmark) + 3
+
+        attr = stats.get("attribution", {})
+        if attr:
+            attr_row = 0
+            for title, df in [
+                ("P&L by Day of Week", attr.get("day_of_week")),
+                ("CE vs PE Daily Contribution", attr.get("ce_pe_daily")),
+                ("Volatility Regime Attribution", attr.get("vol_regime")),
+                ("Moneyness at Entry", attr.get("moneyness")),
+            ]:
+                if df is None or df.empty:
+                    continue
+                pd.DataFrame([{"Section": title}]).to_excel(
+                    writer, sheet_name="Attribution", index=False, header=False, startrow=attr_row
+                )
+                attr_row += 2
+                df.to_excel(writer, sheet_name="Attribution", index=False, startrow=attr_row)
+                attr_row += len(df) + 3
 
         if sweep_df is not None and not sweep_df.empty:
             sweep_df.to_excel(writer, sheet_name="Sensitivity", index=False)

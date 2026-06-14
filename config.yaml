@@ -7,3 +7,7 @@ lot_size: 15
 starting_capital: 100000
 base_nav: 100.0
 use_parquet_cache: true
+realism_enabled: true
+slippage_pct: 0.005
+brokerage_per_leg: 20
+risk_free_rate: 0.06

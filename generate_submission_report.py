@@ -392,7 +392,8 @@ def build_report(data: dict) -> None:
     cagr = summary_dict.get("CAGR", "N/A")
     max_dd = summary_dict.get("Max Drawdown", "N/A")
     final_nav = summary_dict.get("Final NAV", "N/A")
-    total_pnl = summary_dict.get("Total Gross P&L (INR)", "N/A")
+    pnl_key = next((k for k in summary_dict if k.startswith("Total P&L")), "Total P&L (INR)")
+    total_pnl = summary_dict.get(pnl_key, "N/A")
 
     risk = stats.get("risk_metrics", {})
 
@@ -538,7 +539,10 @@ def build_report(data: dict) -> None:
         "Semi-join on selected (Date, Ticker) keys before SL merge",
         "Extended risk metrics: Sharpe, Sortino, Calmar, profit factor, expectancy",
         "Parameter sweep engine with CAGR heatmap (premium vs SL multiplier)",
-        "Streamlit dashboard (dashboard.py) with Plotly equity curve",
+        "Streamlit dashboard (dashboard.py) with Plotly equity curve, drawdown, filters, sweep heatmap",
+        "Realism layer: slippage on SL exits, flat brokerage, margin-exceeded flag",
+        "Regime attribution: day-of-week, CE/PE, volatility buckets, moneyness",
+        "Benchmark comparison vs Bank Nifty buy-and-hold (alpha, beta, information ratio)",
         "PostgreSQL storage via docker compose (options_bars, spot_bars, trades)",
         "pytest core tests + GitHub Actions CI (ruff + pytest on fixtures)",
     ]:
@@ -548,7 +552,8 @@ def build_report(data: dict) -> None:
     for item in [
         "Dataset contains week-1 (nearest Wednesday expiry) Bank Nifty weekly options only",
         "Wednesday is expiry day; all trading days included including expiry Wednesdays",
-        "SL fill at exactly 1.5x entry when High breaches; no slippage or transaction costs",
+        "SL fill at exactly 1.5x entry when High breaches; optional slippage on SL exits (config)",
+        "Flat brokerage per leg when realism layer enabled (config.yaml)",
         "Duplicate Date/Ticker/Time rows deduplicated (keep last)",
         "Spot underlying merged on minute key where available",
     ]:
@@ -591,6 +596,39 @@ def build_report(data: dict) -> None:
             f"{r['Avg % P&L']:.2f}%", f"{r['Avg Gross P&L']:.2f}",
         ])
     story.append(_table(exp_data, col_widths=[2 * cm, 3.8 * cm, 1.6 * cm, 2.4 * cm, CONTENT_W - 9.8 * cm]))
+
+    realism = stats.get("realism_comparison")
+    if realism is not None and not realism.empty and len(realism) > 1:
+        story.append(Spacer(1, 14))
+        story.append(Paragraph("6.4 Ideal vs Realistic P&amp;L", S["SectionH2"]))
+        story.append(Paragraph(
+            "The realism layer applies adverse slippage on stop-loss fills and flat brokerage per leg. "
+            "Ideal P&amp;L excludes costs; realistic P&amp;L uses net figures for NAV and risk metrics.",
+            S["Body"],
+        ))
+        story.append(_df_to_table(realism, font_size=9))
+
+    attr = stats.get("attribution", {})
+    dow = attr.get("day_of_week")
+    if dow is not None and not dow.empty:
+        story.append(Spacer(1, 14))
+        story.append(Paragraph("6.5 Regime Attribution", S["SectionH2"]))
+        story.append(Paragraph("6.5a P&amp;L by Day of Week", S["SectionH2"]))
+        story.append(_df_to_table(dow, font_size=9))
+        vol = attr.get("vol_regime")
+        if vol is not None and not vol.empty:
+            story.append(Paragraph("6.5b Volatility Regime (20-day rolling spot std)", S["SectionH2"]))
+            story.append(_df_to_table(vol, font_size=9))
+        money = attr.get("moneyness")
+        if money is not None and not money.empty:
+            story.append(Paragraph("6.5c Moneyness at Entry", S["SectionH2"]))
+            story.append(_df_to_table(money, font_size=9))
+
+    benchmark = stats.get("benchmark_summary")
+    if benchmark is not None and not benchmark.empty:
+        story.append(Spacer(1, 14))
+        story.append(Paragraph("6.6 Benchmark Comparison (Bank Nifty Buy &amp; Hold)", S["SectionH2"]))
+        story.append(_df_to_table(benchmark, font_size=9))
 
     story.append(PageBreak())
 
@@ -650,6 +688,7 @@ def build_report(data: dict) -> None:
         ["Jupyter Notebook", "short_strangle_backtest.ipynb", "Complete"],
         ["YAML Configuration", "config.yaml", "Complete"],
         ["Excel - Guide / Tradesheet / Statistics", "backtest_output.xlsx", "Complete"],
+        ["Excel - Attribution Sheet", "backtest_output.xlsx (Attribution tab)", "Complete"],
         ["Equity Curve Chart", "equity_curve.png", "Complete"],
         ["Drawdown Chart", "drawdown.png", "Complete"],
         ["Parameter Sweep Heatmap", "sensitivity_heatmap.png", "Generated via sweep"],
