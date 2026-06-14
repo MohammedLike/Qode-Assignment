@@ -239,9 +239,15 @@ def _h1(text: str, S: dict) -> list:
     return [Paragraph(text, S["SectionH1"]), _section_rule(), Spacer(1, 8)]
 
 
-def _table(data, col_widths=None, header_rows=1, font_size=9) -> Table:
+def _table(
+    data,
+    col_widths=None,
+    header_rows=1,
+    font_size=9,
+    right_cols: set[int] | None = None,
+) -> Table:
     t = Table(data, colWidths=col_widths, repeatRows=header_rows)
-    t.setStyle(TableStyle([
+    style = [
         ("BACKGROUND", (0, 0), (-1, header_rows - 1), TABLE_HEAD_BG),
         ("TEXTCOLOR", (0, 0), (-1, header_rows - 1), TABLE_HEAD_TEXT),
         ("FONTNAME", (0, 0), (-1, header_rows - 1), "Helvetica-Bold"),
@@ -252,12 +258,42 @@ def _table(data, col_widths=None, header_rows=1, font_size=9) -> Table:
         ("BOX", (0, 0), (-1, -1), 0.5, TABLE_BORDER),
         ("INNERGRID", (0, 0), (-1, -1), 0.25, TABLE_BORDER),
         ("ROWBACKGROUNDS", (0, header_rows), (-1, -1), [WHITE, TABLE_ALT]),
-        ("TOPPADDING", (0, 0), (-1, -1), 7),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
-        ("LEFTPADDING", (0, 0), (-1, -1), 8),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-    ]))
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+    ]
+    if right_cols:
+        for col in right_cols:
+            style.append(("ALIGN", (col, header_rows), (col, -1), "RIGHT"))
+    t.setStyle(TableStyle(style))
     return t
+
+
+def _cell_style(font_size: float = 8, bold: bool = False) -> ParagraphStyle:
+    return ParagraphStyle(
+        "Cell",
+        fontName="Helvetica-Bold" if bold else "Helvetica",
+        fontSize=font_size,
+        leading=font_size + 2,
+        textColor=TEXT,
+    )
+
+
+def _table_from_rows(
+    headers: list[str],
+    rows: list[list[str]],
+    col_widths: list,
+    font_size: float = 8,
+    right_cols: set[int] | None = None,
+) -> Table:
+    """Build table with Paragraph cells so long text wraps instead of overlapping."""
+    cs = _cell_style(font_size)
+    hs = _cell_style(font_size, bold=True)
+    data = [[Paragraph(str(h), hs) for h in headers]]
+    for row in rows:
+        data.append([Paragraph(str(v), cs) for v in row])
+    return _table(data, col_widths=col_widths, font_size=font_size, right_cols=right_cols)
 
 
 def _metric_table(rows: list[tuple[str, str]]) -> Table:
@@ -304,8 +340,15 @@ def _df_to_table(
     return _table([cols] + rows, col_widths=col_widths, font_size=font_size)
 
 
+def _normalize_widths(widths: list[float]) -> list[float]:
+    total = sum(widths)
+    if total <= 0:
+        return widths
+    scale = CONTENT_W / total
+    return [w * scale for w in widths]
+
+
 def _auto_col_widths(columns: list[str], rows: list[list[str]]) -> list:
-    """Allocate column width by content length with sensible min/max."""
     min_w = 1.3 * cm
     max_w = 5.0 * cm
     weights = []
@@ -320,6 +363,15 @@ def _auto_col_widths(columns: list[str], rows: list[list[str]]) -> list:
     # Rescale to exactly CONTENT_W
     scale = CONTENT_W / sum(widths)
     return [w * scale for w in widths]
+
+
+def _sample_trades_table(df: pd.DataFrame) -> Table:
+    cols = [str(c) for c in df.columns]
+    rows = df.astype(str).values.tolist()
+    # Extra width for Option Ticker; normalized to page width
+    raw = [2.2, 1.4, 5.4, 1.7, 1.7, 2.0, 2.0]
+    widths = _normalize_widths([w * cm for w in raw])
+    return _table_from_rows(cols, rows, widths, font_size=8, right_cols={3, 4, 5})
 
 
 def _cover_block(S: dict) -> list:
@@ -612,12 +664,7 @@ def build_report(data: dict) -> None:
         "Entry Date", "Option Type", "Option Ticker", "Entry Price",
         "Exit Price", "Gross P&L", "Exit Time",
     ]
-    sample_widths = [2.3 * cm, 1.5 * cm, 5.0 * cm, 1.8 * cm, 1.8 * cm, 2.1 * cm, 2.1 * cm]
-    story.append(_df_to_table(
-        ts[sample_cols].head(5),
-        font_size=8,
-        col_widths=sample_widths,
-    ))
+    story.append(_sample_trades_table(ts[sample_cols].head(5)))
     story.append(Spacer(1, 14))
 
     story.append(Paragraph("10.1 Interpretation Guide", S["SectionH2"]))
