@@ -5,8 +5,6 @@ __pycache__/
 venv/
 .env
 
-# Options file exceeds GitHub 100MB limit — download separately (see README)
 Options_data_2023.csv
 
-# Misc local artifacts
 unnamed.png
