@@ -47,7 +47,6 @@ def _write_parquet_cache(df: pd.DataFrame) -> None:
 
 
 def load_options(cfg: StrategyConfig | None = None) -> pd.DataFrame:
-    """Load options with parquet cache (09:20-15:20 window, deduplicated)."""
     cfg = cfg or StrategyConfig.from_yaml()
     t0 = time.perf_counter()
 

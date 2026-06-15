@@ -40,7 +40,6 @@ def test_sweep_grid_shape(sample_cfg: StrategyConfig):
 
 
 def test_sweep_higher_sl_not_worse_on_all_metrics(sample_cfg: StrategyConfig):
-    """Looser SL should not produce strictly lower final NAV on every cell (sanity)."""
     options = load_options(sample_cfg)
     spot = load_spot(sample_cfg)
     df = run_sweep(options, spot, sample_cfg, [50.0], [1.3, 1.7])

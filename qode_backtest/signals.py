@@ -12,7 +12,6 @@ def apply_signals(
     selected: pd.DataFrame, intraday: pd.DataFrame, cfg: StrategyConfig | None = None
 ) -> pd.DataFrame:
     cfg = cfg or StrategyConfig.from_yaml()
-    """Determine exit via SL or scheduled exit (semi-join on selected keys only)."""
     t0 = time.perf_counter()
 
     keys = selected[["Date", "Ticker"]].drop_duplicates()

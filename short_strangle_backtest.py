@@ -1,5 +1,3 @@
-"""Backward-compatible entry point — delegates to qode_backtest package."""
-
 from __future__ import annotations
 
 from qode_backtest.analytics import compute_statistics

@@ -23,7 +23,6 @@ def connect(dsn: str | None = None, *, connect_timeout: int = 5) -> psycopg.Conn
 
 
 def init_schema(dsn: str | None = None) -> None:
-    """Create tables and indexes from sql/schema.sql."""
     sql = SCHEMA_FILE.read_text(encoding="utf-8")
     with connect(dsn) as conn:
         conn.execute(sql)
@@ -91,7 +90,6 @@ def load_options_to_db(
     dsn: str | None = None,
     truncate: bool = False,
 ) -> int:
-    """Load filtered options bars (parquet cache when available) into PostgreSQL."""
     cfg = cfg or StrategyConfig.from_yaml()
     t0 = time.perf_counter()
     df = load_options(cfg)
@@ -128,7 +126,6 @@ def load_spot_to_db(
     dsn: str | None = None,
     truncate: bool = False,
 ) -> int:
-    """Load Bank Nifty spot 1-min bars into PostgreSQL."""
     cfg = cfg or StrategyConfig.from_yaml()
     t0 = time.perf_counter()
     db_df = _spot_raw_for_db(cfg)
@@ -180,7 +177,6 @@ def save_backtest_run(
     *,
     dsn: str | None = None,
 ) -> int:
-    """Persist backtest run metadata and trades; returns run_id."""
     risk = stats.get("risk_metrics", {})
     sharpe = risk.get("Sharpe Ratio")
 
@@ -249,7 +245,6 @@ def load_all_to_db(
     include_trades: bool = True,
     truncate: bool = False,
 ) -> dict[str, int]:
-    """Initialize schema (if needed), load market data, optionally run backtest and save trades."""
     init_schema(dsn)
     counts = {
         "options": load_options_to_db(cfg, dsn=dsn, truncate=truncate),

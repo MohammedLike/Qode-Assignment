@@ -19,7 +19,6 @@ def run_sweep(
     premiums: list[float] | None = None,
     sl_multipliers: list[float] | None = None,
 ) -> pd.DataFrame:
-    """Grid sweep over target premium and SL multiplier (data loaded once)."""
     premiums = premiums or [40, 45, 50, 55, 60]
     sl_multipliers = sl_multipliers or [1.3, 1.5, 1.7, 2.0]
 

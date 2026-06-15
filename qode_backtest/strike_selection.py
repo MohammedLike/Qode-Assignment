@@ -10,7 +10,6 @@ from qode_backtest.timing import tick
 
 def select_strikes(entry_bars: pd.DataFrame, cfg: StrategyConfig | None = None) -> pd.DataFrame:
     cfg = cfg or StrategyConfig.from_yaml()
-    """Pick CE and PE strikes with entry close closest to target premium."""
     t0 = time.perf_counter()
 
     bars = entry_bars.drop(columns=["option_type"], errors="ignore").copy()

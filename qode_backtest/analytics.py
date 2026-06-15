@@ -253,7 +253,6 @@ def moneyness_attribution(tradesheet: pd.DataFrame, cfg: StrategyConfig) -> pd.D
 def compute_benchmark_comparison(
     tradesheet: pd.DataFrame, cfg: StrategyConfig
 ) -> tuple[pd.DataFrame, pd.Series | None]:
-    """Strategy vs Bank Nifty buy-and-hold; returns summary table and benchmark NAV."""
     try:
         spot = load_spot(cfg)
     except Exception:

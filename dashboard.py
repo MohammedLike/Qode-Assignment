@@ -254,7 +254,7 @@ def _sweep_heatmap(sweep_df: pd.DataFrame) -> go.Figure:
         )
     )
     fig.update_layout(
-        title="Parameter Sweep — CAGR % (Premium × SL Multiplier)",
+        title="Parameter sweep (CAGR %)",
         xaxis_title="SL Multiplier",
         yaxis_title="Target Premium (Rs.)",
         height=400,
@@ -300,7 +300,6 @@ if result:
     tstats = _trade_stats(tradesheet, cfg)
     daily = _daily_pnl(tradesheet, cfg)
 
-    # --- KPI strip: performance ---
     c1, c2, c3, c4, c5, c6 = st.columns(6)
     c1.metric("CAGR", f"{stats['cagr'] * 100:.2f}%")
     c2.metric("Max Drawdown", f"{stats['max_dd']:.2f}%")
@@ -309,7 +308,6 @@ if result:
     c5.metric("Calmar", risk["Calmar Ratio"])
     c6.metric("Final NAV", f"{stats['nav'].iloc[-1]:.2f}")
 
-    # --- KPI strip: trader stats ---
     d1, d2, d3, d4, d5, d6 = st.columns(6)
     d1.metric("Win Rate", f"{tstats['win_rate']:.1f}%")
     d2.metric("Profit Factor", risk["Profit Factor"])
@@ -327,7 +325,7 @@ if result:
         st.plotly_chart(_rolling_metrics_chart(stats["nav"]), use_container_width=True)
 
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-        ["Trades", "Risk Desk", "Trade Analytics", "Attribution", "Sweep", "Exports"]
+        ["Trades", "Risk", "Analytics", "Attribution", "Sweep", "Export"]
     )
 
     with tab1:
@@ -336,7 +334,7 @@ if result:
         st.dataframe(filtered, use_container_width=True, height=400)
 
     with tab2:
-        st.subheader("Risk Desk")
+        st.subheader("Risk")
         r1, r2 = st.columns(2)
         with r1:
             st.plotly_chart(_returns_histogram(stats["nav"]), use_container_width=True)
@@ -373,7 +371,7 @@ if result:
             st.dataframe(stats["benchmark_summary"], use_container_width=True)
 
     with tab3:
-        st.subheader("Trade Analytics")
+        st.subheader("Trade stats")
         a1, a2, a3 = st.columns(3)
         with a1:
             st.plotly_chart(_pnl_histogram(tradesheet, cfg), use_container_width=True)

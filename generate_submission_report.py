@@ -1,8 +1,3 @@
-"""
-Generate professional PDF submission report for Qode Quant Research Analyst assignment.
-Run: python generate_submission_report.py
-"""
-
 from __future__ import annotations
 
 from datetime import datetime
@@ -32,7 +27,6 @@ from qode_backtest.timing import TIMINGS, clear_timings
 BASE_DIR = Path(__file__).resolve().parent
 OUTPUT_PDF = BASE_DIR / "Qode_Assignment_Submission_Report.pdf"
 
-# Light theme palette only
 WHITE = colors.white
 TEXT = colors.HexColor("#1F2937")
 TEXT_MUTED = colors.HexColor("#6B7280")
@@ -58,7 +52,6 @@ CONTENT_W = A4[0] - MARGIN_L - MARGIN_R
 
 
 def _gather_data(report_only: bool = False) -> dict:
-    """Run backtest pipeline and collect all report data."""
     if report_only and (BASE_DIR / "backtest_output.xlsx").exists():
         return _load_cached_data()
 
@@ -73,7 +66,6 @@ def _gather_data(report_only: bool = False) -> dict:
 
 
 def _load_cached_data() -> dict:
-    """Rebuild report data from existing Excel and charts without re-running backtest."""
     clear_timings()
     TIMINGS.update({
         "1_load_options_sec": 0,
@@ -216,7 +208,6 @@ def _styles():
 
 
 def _section_rule() -> Table:
-    """Thin accent line under section headings."""
     t = Table([[""]], colWidths=[CONTENT_W], rowHeights=[2])
     t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), ACCENT),
@@ -295,7 +286,6 @@ def _df_to_table(
 
 
 def _auto_col_widths(columns: list[str], rows: list[list[str]]) -> list:
-    """Allocate column width by content length with sensible min/max."""
     min_w = 1.3 * cm
     max_w = 5.0 * cm
     weights = []
@@ -307,7 +297,6 @@ def _auto_col_widths(columns: list[str], rows: list[list[str]]) -> list:
     raw = [CONTENT_W * w / total_w for w in weights]
     widths = [max(min_w, min(max_w, w)) for w in raw]
 
-    # Rescale to exactly CONTENT_W
     scale = CONTENT_W / sum(widths)
     return [w * scale for w in widths]
 
@@ -348,7 +337,6 @@ def _sample_trades_table(df: pd.DataFrame) -> Table:
 
 
 def _cover_block(S: dict) -> list:
-    """Light-themed cover page content."""
     top_rule = Table([[""]], colWidths=[CONTENT_W], rowHeights=[3])
     top_rule.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), ACCENT)]))
 
@@ -412,15 +400,12 @@ def build_report(data: dict) -> None:
     story.extend(_cover_block(S))
     story.append(PageBreak())
 
-    # 1. Executive Summary
     story.extend(_h1("1. Executive Summary", S))
     story.append(Paragraph(
-        f"This report documents the submission for the {ORG} {ROLE} technical assignment: "
-        f"a vectorized backtest of a 09:20 AM Bank Nifty short strangle system over 247 trading days "
-        f"(494 option legs). The strategy sells one call and one put at strikes nearest to Rs. 50 "
-        f"premium, with a 50% stop-loss per leg and scheduled exit at 15:20. All deliverables "
-        f"requested by {ORG} are included: modular Python package, Excel workbook, charts, "
-        f"pytest suite, CI pipeline, optional PostgreSQL storage, and runtime profiling.",
+        f"This report is my submission for the {ORG} {ROLE} assignment ? a backtest of a "
+        f"09:20 AM Bank Nifty short strangle over 247 days (494 legs). Each day I sell CE and PE "
+        f"nearest Rs. 50 premium, with 50% stop-loss per leg and exit at 15:20. "
+        f"Deliverables: Python code, Excel workbook, charts, and this report.",
         S["Body"],
     ))
     story.append(Spacer(1, 10))
@@ -439,13 +424,11 @@ def build_report(data: dict) -> None:
     ]))
     story.append(Spacer(1, 14))
 
-    # 2. Assignment Objective
     story.extend(_h1("2. Assignment Objective", S))
     story.append(Paragraph(
-        "Develop a backtest for a 09:20 AM short strangle trading system using one year of Bank Nifty "
-        "index and options data. The system must demonstrate options strategy design, vectorized data "
-        "manipulation, backtesting accuracy, statistical analysis, and computational efficiency "
-        "(target: under 60 seconds end-to-end).",
+        "Build a backtest for the 09:20 AM short strangle using one year of Bank Nifty options "
+        "and index data. Output should include trade log, performance stats, equity curve, "
+        "drawdown, and monthly returns. Target runtime under 60 seconds.",
         S["Body"],
     ))
     story.append(Paragraph("2.1 Core Requirements", S["SectionH2"]))
@@ -454,18 +437,15 @@ def build_report(data: dict) -> None:
         "Entry at 09:20; exit at 15:20 or 50% stop-loss per leg (checked via High column)",
         "Fixed position size: 1 lot x 15 quantity, no compounding",
         "Trade week-1 weekly options (Wednesday expiry); trade every trading day",
-        "Vectorized implementation with no per-day Python loops",
+        "Vectorized pandas code (no day-by-day loops)",
         "Excel output with Guide, Tradesheet, and Statistics worksheets",
     ]:
         story.append(Paragraph(f"- {item}", S["Bullet"]))
 
-    # 3. Strategy
     story.extend(_h1("3. Strategy Overview", S))
     story.append(Paragraph(
-        "A <b>short strangle</b> is a neutral options strategy that profits from time decay when the "
-        "underlying remains range-bound. The trader simultaneously sells an out-of-the-money call (CE) "
-        "and put (PE) with the same expiration. Premium is collected at entry; the position is closed "
-        "by buying back the options at a lower price (profit) or higher price (loss).",
+        "Short strangle: sell OTM call and put, collect premium, buy back later. "
+        "Works when spot stays in a range; losses when one leg runs against you (often via SL).",
         S["Body"],
     ))
     story.append(Paragraph("3.1 Trade Lifecycle", S["SectionH2"]))
@@ -480,22 +460,17 @@ def build_report(data: dict) -> None:
     story.append(_table(lifecycle, col_widths=[3.8 * cm, 3.2 * cm, CONTENT_W - 7 * cm]))
     story.append(Spacer(1, 12))
 
-    # 4. Methodology
     story.extend(_h1("4. Methodology", S))
-    story.append(Paragraph("4.1 Strike Selection Module", S["SectionH2"]))
+    story.append(Paragraph("4.1 Strike Selection", S["SectionH2"]))
     story.append(Paragraph(
-        "At 09:20:59 each trading day, all available CE and PE contracts are evaluated independently. "
-        "The contract whose 1-minute Close price minimizes |Close - 50| is selected. Tie-breaking: "
-        "higher strike for CE, lower strike for PE. Implementation uses vectorized groupby on "
-        "approximately 120 contracts per day.",
+        "At 09:20:59, pick CE and PE whose close is closest to Rs. 50. "
+        "If tied, higher strike for CE, lower for PE. Done with groupby per date.",
         S["Body"],
     ))
-    story.append(Paragraph("4.2 Signal Generation and Stop-Loss", S["SectionH2"]))
+    story.append(Paragraph("4.2 Stop-Loss and Exit", S["SectionH2"]))
     story.append(Paragraph(
-        "For each selected leg, a 50% stop-loss is defined as SL Price = Entry Price x 1.5. Since "
-        "the position is short, loss occurs when the option price rises. Each 1-minute bar from "
-        "09:21:59 through 15:20:59 is scanned; if High is greater than or equal to SL Price, the "
-        "leg exits at SL Price at the first breach minute. Otherwise, exit occurs at 15:20:59 Close.",
+        "SL = entry x 1.5. Scan 1-min bars from 09:21 to 15:20; if High >= SL, exit at SL price "
+        "on first hit. Otherwise exit at 15:20 close.",
         S["Body"],
     ))
     story.append(Paragraph("4.3 Position Sizing", S["SectionH2"]))
@@ -514,7 +489,6 @@ def build_report(data: dict) -> None:
 
     story.append(PageBreak())
 
-    # 5. Implementation
     story.extend(_h1("5. Implementation Architecture", S))
     impl = [
         ["Module", "Path", "Role"],
@@ -533,18 +507,14 @@ def build_report(data: dict) -> None:
     ]
     story.append(_table(impl, col_widths=[3.0 * cm, 5.5 * cm, CONTENT_W - 8.5 * cm]))
     story.append(Spacer(1, 10))
-    story.append(Paragraph("5.1 Advanced Enhancements", S["SectionH2"]))
+    story.append(Paragraph("5.1 Other additions", S["SectionH2"]))
     for item in [
-        "Parquet cache (data/options_0920_1520.parquet) cuts repeat load from ~30s to ~2s",
-        "Semi-join on selected (Date, Ticker) keys before SL merge",
-        "Extended risk metrics: Sharpe, Sortino, Calmar, profit factor, expectancy",
-        "Parameter sweep engine with CAGR heatmap (premium vs SL multiplier)",
-        "Streamlit dashboard (dashboard.py) with Plotly equity curve, drawdown, filters, sweep heatmap",
-        "Realism layer: slippage on SL exits, flat brokerage, margin-exceeded flag",
-        "Regime attribution: day-of-week, CE/PE, volatility buckets, moneyness",
-        "Benchmark comparison vs Bank Nifty buy-and-hold (alpha, beta, information ratio)",
-        "PostgreSQL storage via docker compose (options_bars, spot_bars, trades)",
-        "pytest core tests + GitHub Actions CI (ruff + pytest on fixtures)",
+        "Parquet cache for faster reload on repeat runs",
+        "Parameter sweep on premium and SL multiplier",
+        "Streamlit dashboard for charts and trade filters",
+        "Slippage and brokerage option in config",
+        "PostgreSQL loader for options/spot/trades",
+        "pytest + GitHub Actions CI",
     ]:
         story.append(Paragraph(f"- {item}", S["Bullet"]))
     story.append(Spacer(1, 8))
@@ -559,7 +529,6 @@ def build_report(data: dict) -> None:
     ]:
         story.append(Paragraph(f"- {item}", S["Bullet"]))
 
-    # 6. Performance
     story.extend(_h1("6. Performance Results", S))
     story.append(Paragraph("6.1 Summary Metrics", S["SectionH2"]))
     story.append(_metric_table([
@@ -602,8 +571,8 @@ def build_report(data: dict) -> None:
         story.append(Spacer(1, 14))
         story.append(Paragraph("6.4 Ideal vs Realistic P&amp;L", S["SectionH2"]))
         story.append(Paragraph(
-            "The realism layer applies adverse slippage on stop-loss fills and flat brokerage per leg. "
-            "Ideal P&amp;L excludes costs; realistic P&amp;L uses net figures for NAV and risk metrics.",
+            "Slippage on SL fills and flat brokerage per leg (see config.yaml). "
+            "Gross P&L is before costs; net P&L after.",
             S["Body"],
         ))
         story.append(_df_to_table(realism, font_size=9))
@@ -632,7 +601,6 @@ def build_report(data: dict) -> None:
 
     story.append(PageBreak())
 
-    # 7. Charts
     story.extend(_h1("7. Equity Curve and Drawdown", S))
     eq_path = BASE_DIR / "equity_curve.png"
     dd_path = BASE_DIR / "drawdown.png"
@@ -658,46 +626,34 @@ def build_report(data: dict) -> None:
 
     story.append(PageBreak())
 
-    # 8. Runtime
     story.extend(_h1("8. Runtime Performance Analysis", S))
     story.append(Paragraph(
-        f"The backtest completes in <b>{data['total_runtime']:.2f} seconds</b> on repeat runs "
-        f"(parquet cache). First-run CSV parse takes ~35-40 seconds. Both are within the "
-        f"60-second assignment target.",
+        f"Repeat run with parquet cache: <b>{data['total_runtime']:.2f} sec</b>. "
+        f"First CSV load is slower (~35-40 sec). Under the 60 sec target either way.",
         S["Body"],
     ))
     story.append(Spacer(1, 10))
     story.append(_runtime_table(data["timings"], data["total_runtime"]))
     story.append(Spacer(1, 14))
-    story.append(Paragraph("8.1 Optimization Techniques", S["SectionH2"]))
+    story.append(Paragraph("8.1 Speed notes", S["SectionH2"]))
     for item in [
-        "Parquet cache with CSV mtime invalidation for filtered 09:20-15:20 window",
-        "Semi-join filter on selected (Date, Ticker) before stop-loss path merge",
-        "Selective column loading and categorical dtypes for Ticker and Call/Put",
-        "Vectorized groupby for strike selection and stop-loss detection",
-        "Duplicate Date/Ticker/Time rows deduplicated (keep last)",
+        "Parquet cache for filtered 09:20-15:20 window",
+        "Only merge SL path for selected tickers",
+        "Categorical dtypes on ticker columns",
+        "Dedup duplicate bars (keep last)",
     ]:
         story.append(Paragraph(f"- {item}", S["Bullet"]))
 
-    # 9. Deliverables
     story.extend(_h1("9. Submission Deliverables", S))
     deliverables = [
         ["Deliverable", "File", "Status"],
-        ["Modular Backtest Package", "qode_backtest/", "Complete"],
-        ["Python Entry Point", "short_strangle_backtest.py", "Complete"],
-        ["Jupyter Notebook", "short_strangle_backtest.ipynb", "Complete"],
-        ["YAML Configuration", "config.yaml", "Complete"],
-        ["Excel - Guide / Tradesheet / Statistics", "backtest_output.xlsx", "Complete"],
-        ["Excel - Attribution Sheet", "backtest_output.xlsx (Attribution tab)", "Complete"],
-        ["Equity Curve Chart", "equity_curve.png", "Complete"],
-        ["Drawdown Chart", "drawdown.png", "Complete"],
-        ["Parameter Sweep Heatmap", "sensitivity_heatmap.png", "Generated via sweep"],
-        ["Streamlit Dashboard", "dashboard.py", "Complete"],
-        ["PostgreSQL Schema + Loader", "sql/schema.sql, qode_backtest/db.py", "Complete"],
-        ["Unit Tests", "tests/test_core.py, tests/test_db.py", "Complete"],
-        ["CI Pipeline", ".github/workflows/ci.yml", "Complete"],
-        ["Submission Report", "Qode_Assignment_Submission_Report.pdf", "Complete"],
-        ["Dependencies", "requirements.txt", "Complete"],
+        ["Entry Point", "short_strangle_backtest.py", "Done"],
+        ["Notebook", "short_strangle_backtest.ipynb", "Done"],
+        ["Excel output", "backtest_output.xlsx", "Done"],
+        ["Charts", "equity_curve.png, drawdown.png", "Done"],
+        ["Dashboard", "dashboard.py", "Done"],
+        ["Tests + CI", "tests/, .github/workflows/ci.yml", "Done"],
+        ["This report", "Qode_Assignment_Submission_Report.pdf", "Done"],
     ]
     story.append(_table(deliverables, col_widths=[4.2 * cm, 6.8 * cm, CONTENT_W - 11 * cm]))
     story.append(Spacer(1, 14))
@@ -708,10 +664,9 @@ def build_report(data: dict) -> None:
 
     story.append(PageBreak())
 
-    # 10. Appendix
     story.extend(_h1("10. Appendix: Sample Trades", S))
     story.append(Paragraph(
-        "First five trades from the Tradesheet demonstrating entry, exit, P&amp;L, and capital tracking.",
+        "Sample rows from the tradesheet.",
         S["Body"],
     ))
     sample_cols = [
@@ -721,13 +676,10 @@ def build_report(data: dict) -> None:
     story.append(_sample_trades_table(ts[sample_cols].head(5)))
     story.append(Spacer(1, 14))
 
-    story.append(Paragraph("10.1 Interpretation Guide", S["SectionH2"]))
+    story.append(Paragraph("10.1 Notes", S["SectionH2"]))
     story.append(Paragraph(
-        "<b>Winners (short options):</b> Exit Price is less than Entry Price. "
-        "<b>Losers:</b> Exit Price is greater than Entry Price, typically from stop-loss events. "
-        "<b>Expiry days (Wednesdays):</b> accelerated time decay can affect CE/PE performance. "
-        "<b>NAV:</b> Normalized portfolio value starting at 100. "
-        "<b>Max Drawdown:</b> Largest peak-to-trough decline in NAV.",
+        "Short option profit when exit &lt; entry. SL exits are usually the losing trades. "
+        "NAV starts at 100. Drawdown is peak-to-trough on NAV.",
         S["Body"],
     ))
 
